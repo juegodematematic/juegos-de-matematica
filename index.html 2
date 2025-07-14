@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Juego Matemático</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        html, body {
+            height: 100%;
+            width: 100%;
+            font-family: Arial, sans-serif;
+            background: url('https://img.freepik.com/vector-premium/fondo-educacion-matematicas-diseno-vintage_23-2148494703.jpg') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 20px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .question {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .options button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 15px;
+            font-size: 18px;
+            border-radius: 10px;
+            border: none;
+            background-color: #4CAF50;
+            color: white;
+            transition: 0.3s;
+        }
+        .options button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+        .lives, .timer {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Juego Matemático</h1>
+        <div class="lives" id="lives">❤️❤️❤️</div>
+        <div class="timer" id="timer">Tiempo: 10s</div>
+        <div class="question" id="question"></div>
+        <div class="options">
+            <button id="optionA"></button>
+            <button id="optionB"></button>
+            <button id="optionC"></button>
+        </div>
+        <div class="result" id="result"></div>
+    </div>
+
+    <audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-4.mp3"></audio>
+    <audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+
+    <script>
+        let level = 1;
+        let correctAnswer = 0;
+        let lives = 3;
+        let timer;
+        let timeLeft = 10;
+
+        function startTimer() {
+            clearInterval(timer);
+            timeLeft = 10;
+            document.getElementById('timer').innerText = `Tiempo: ${timeLeft}s`;
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = `Tiempo: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    loseLife();
+                }
+            }, 1000);
+        }
+
+        function loseLife() {
+            clearInterval(timer);
+            lives--;
+            document.getElementById('lives').innerText = '❤️'.repeat(lives);
+            if (lives <= 0) {
+                document.getElementById('question').innerText = '¡Perdiste todas las vidas!';
+                document.querySelector('.options').innerHTML = '<p>Refresca para volver a intentar.</p>';
+                return;
+            }
+            document.getElementById('result').innerText = 'Se te acabó el tiempo. Pierdes una vida.';
+            startTimer();
+        }
+
+        function generateQuestion() {
+            let num1, num2, question, answer;
+            if (level <= 10) {
+                num1 = Math.floor(Math.random() * (level < 10 ? 10 : 50)) + 1;
+                num2 = Math.floor(Math.random() * (level < 10 ? 10 : 50)) + 1;
+                question = `¿Cuánto es ${num1} + ${num2}?`;
+                answer = num1 + num2;
+            } else if (level <= 15) {
+                num1 = Math.floor(Math.random() * (level < 15 ? 10 : 20)) + 1;
+                num2 = Math.floor(Math.random() * (level < 15 ? 10 : 20)) + 1;
+                question = `¿Cuánto es ${num1} x ${num2}?`;
+                answer = num1 * num2;
+            } else if (level <= 20) {
+                num1 = Math.floor(Math.random() * (level < 20 ? 10 : 50)) + 1;
+                num2 = Math.floor(Math.random() * 9) + 1;
+                question = `¿Cuánto es ${num1} ÷ ${num2} (redondea hacia abajo)?`;
+                answer = Math.floor(num1 / num2);
+            } else if (level <= 25) {
+                num1 = Math.floor(Math.random() * 100) + 1;
+                num2 = Math.floor(Math.random() * 20) + 1;
+                question = `¿Cuánto es el ${num2}% de ${num1}? (redondea)`;
+                answer = Math.round((num1 * num2) / 100);
+            }
+
+            correctAnswer = answer;
+            const wrong1 = answer + Math.floor(Math.random() * 10 + 1);
+            const wrong2 = answer - Math.floor(Math.random() * 5 + 1);
+            const options = shuffle([answer, wrong1, wrong2]);
+
+            document.getElementById('question').innerText = `Nivel ${level}:
+ ${question}`;
+            document.getElementById('optionA').innerText = `A: ${options[0]}`;
+            document.getElementById('optionB').innerText = `B: ${options[1]}`;
+            document.getElementById('optionC').innerText = `C: ${options[2]}`;
+            document.getElementById('result').innerText = '';
+            startTimer();
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function checkAnswer(selected) {
+            clearInterval(timer);
+            const selectedValue = parseInt(selected.innerText.split(': ')[1]);
+            if (selectedValue === correctAnswer) {
+                document.getElementById('correctSound').play();
+                if (level === 25) {
+                    document.getElementById('question').innerText = '¿Te gustó el juego? 😊';
+                    document.querySelector('.options').innerHTML = '<p>Gracias por jugar.</p>';
+                    return;
+                }
+                level++;
+                generateQuestion();
+            } else {
+                document.getElementById('wrongSound').play();
+                loseLife();
+            }
+        }
+
+        document.getElementById('optionA').addEventListener('click', () => checkAnswer(optionA));
+        document.getElementById('optionB').addEventListener('click', () => checkAnswer(optionB));
+        document.getElementById('optionC').addEventListener('click', () => checkAnswer(optionC));
+
+        generateQuestion();
+    </script>
+</body>
+</html>
